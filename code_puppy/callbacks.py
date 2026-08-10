@@ -63,6 +63,7 @@ PhaseType = Literal[
     "post_autosave",
     "notification",
     "awaiting_user_input",
+    "feature_capability",
 ]
 CallbackFunc = Callable[..., Any]
 
@@ -126,6 +127,7 @@ _callbacks: Dict[PhaseType, List[CallbackFunc]] = {
     "post_autosave": [],
     "notification": [],
     "awaiting_user_input": [],
+    "feature_capability": [],
 }
 
 logger = logging.getLogger(__name__)
@@ -248,6 +250,14 @@ def count_callbacks(phase: Optional[PhaseType] = None) -> int:
     if phase is None:
         return sum(len(callbacks) for callbacks in _callbacks.values())
     return len(_callbacks.get(phase, []))
+
+
+def get_feature_capability(name: str) -> bool:
+    """Return the last plugin-provided state for *name*, or safely default false."""
+    results = _trigger_callbacks_sync("feature_capability", name)
+    return next(
+        (result for result in reversed(results) if isinstance(result, bool)), False
+    )
 
 
 def _trigger_callbacks_sync(
